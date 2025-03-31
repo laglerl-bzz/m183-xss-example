@@ -68,7 +68,6 @@ app.get('/dom', (req, res) => {
         
         document.getElementById("output").innerHTML = document.getElementById("inputField").value;
 
-        // Force script execution by re-inserting scripts
         const scripts = document.getElementById("output").getElementsByTagName('script');
         for (let script of scripts) {
             const newScript = document.createElement('script');
