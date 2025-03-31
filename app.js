@@ -3,35 +3,83 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 
-app.use(bodyParser.urlencoded({ extended: false }));
-
-app.get('/', (req, res) => {
-  const name = req.query.name || 'Guest';
-  res.send(`
-    <h1>Welcome, ${name}!</h1>
-    <form method="POST" action="/comment">
-      <textarea name="comment" placeholder="Leave a comment"></textarea>
-      <br><button type="submit">Post Comment</button>
-    </form>
-  `);
-});
+// Setup
+app.use(bodyParser.urlencoded({extended: false}));
 
 let comments = [];
 
-app.post('/comment', (req, res) => {
-  comments.push(req.body.comment);
-  res.redirect('/comments');
+app.get('/', (req, res) => {
+    res.send(`
+    <h1>XSS Demo</h1>
+    <ul>
+      <li><a href="/stored">Stored XSS</a> (Comments)</li>
+      <li><a href="/search">Reflected XSS</a> (Search)</li>
+      <li><a href="/dom">DOM-Based XSS</a></li>
+    </ul>
+  `);
 });
 
-app.get('/comments', (req, res) => {
-  const commentHtml = comments.map(c => `<p>${c}</p>`).join('');
-  res.send(`
+app.get('/stored', (req, res) => {
+    let commentsList = comments.map(comment =>
+        `<li>${comment.content}</li>`
+    ).join('');
+
+    res.send(`
     <h1>Comments</h1>
-    ${commentHtml}
-    <a href="/">Back</a>
+    <form method="POST" action="/stored">
+      <input type="text" name="comment">
+      <button>Post</button>
+    </form>
+    <ul>${commentsList}</ul>
+    <a href="/">Back to home</a>
+  `);
+});
+
+app.post('/stored', (req, res) => {
+    comments.push({content: req.body.comment});
+    res.redirect('/stored');
+});
+
+app.get('/search', (req, res) => {
+    const query = req.query.q || '';
+
+    res.send(`
+    <h1>Search</h1>
+    <form>
+      <input type="text" name="q">
+      <button>Search</button>
+    </form>
+    ${query ? `<p>Results for: ${query}</p>` : ''}
+    <a href="/">Back to home</a>
+  `);
+});
+
+app.get('/dom', (req, res) => {
+    res.send(`
+    <h1>DOM-Based XSS</h1>
+    <p id="output"></p>
+        <input id="inputField" type="text" >
+        <button id="submitBU" type="submit">Submit</button>
+        </br>
+    <a href="/">Back to home</a>
+
+<script>
+    document.getElementById("submitBU").addEventListener("click", function() {
+        
+        document.getElementById("output").innerHTML = document.getElementById("inputField").value;
+
+        // Force script execution by re-inserting scripts
+        const scripts = document.getElementById("output").getElementsByTagName('script');
+        for (let script of scripts) {
+            const newScript = document.createElement('script');
+            newScript.textContent = script.textContent;
+            document.body.appendChild(newScript).remove();
+        }
+    });
+</script>
   `);
 });
 
 app.listen(port, () => {
-  console.log(`XSS demo app running at http://localhost:${port}`);
+    console.log(`Server running at http://localhost:${port}`);
 });
