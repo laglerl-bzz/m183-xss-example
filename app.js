@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
     </ul>
   `);
 });
-
+// Übung 1
 app.get('/stored', (req, res) => {
     let commentsList = comments.map(comment =>
         `<li>${comment.content}</li>`
@@ -39,7 +39,7 @@ app.post('/stored', (req, res) => {
     comments.push({content: req.body.comment});
     res.redirect('/stored');
 });
-
+// Übung 2
 app.get('/search', (req, res) => {
     const query = req.query.q || '';
 
@@ -53,7 +53,7 @@ app.get('/search', (req, res) => {
     <a href="/">Back to home</a>
   `);
 });
-
+// Übung 3
 app.get('/dom', (req, res) => {
     res.send(`
     <h1>DOM-Based XSS</h1>
